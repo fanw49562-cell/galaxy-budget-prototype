@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galaxy：预算占用1.0 - 完整系统原型</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+            color: #333;
+        }
+
+        .prototype-container {
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+
+        .page-switcher {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            background: white;
+            padding: 16px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .page-btn {
+            padding: 10px 24px;
+            background: #fafafa;
+            border: 2px solid #e8e8e8;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .page-btn:hover {
+            border-color: #1890ff;
+            color: #1890ff;
+        }
+
+        .page-btn.active {
+            background: #1890ff;
+            color: white;
+            border-color: #1890ff;
+        }
+
+        .page-content {
+            display: none;
+        }
+
+        .page-content.active {
+            display: block;
+        }
+
+        .container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+
+        .header {
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #e8e8e8;
+        }
+
+        .breadcrumb {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 12px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 8px 16px;
+            background: #fafafa;
+            border: 1px solid #e8e8e8;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .tab.active {
+            background: #1890ff;
+            color: white;
+            border-color: #1890ff;
+        }
+
+        .page-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1890ff;
+            margin-bottom: 24px;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .search-bar {
+            display: flex;
+            gap: 8px;
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            border-color: #1890ff;
+            color: #1890ff;
+        }
+
+        .btn-primary {
+            background: #1890ff;
+            color: white;
+            border-color: #1890ff;
+        }
+
+        .btn-primary:hover {
+            background: #40a9ff;
+            border-color: #40a9ff;
+        }
+
+        .btn-success {
+            background: #52c41a;
+            color: white;
+            border-color: #52c41a;
+        }
+
+        .btn-danger {
+            background: #ff4d4f;
+            color: white;
+            border-color: #ff4d4f;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            border: 1px solid #e8e8e8;
+            border-radius: 4px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1400px;
+        }
+
+        thead {
+            background: #fafafa;
+        }
+
+        th {
+            padding: 12px 8px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            color: #262626;
+            border-bottom: 1px solid #e8e8e8;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 12px 8px;
+            font-size: 12px;
+            color: #595959;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        tbody tr:hover {
+            background: #fafafa;
+        }
+
+        .checkbox-col {
+            width: 50px;
+            text-align: center;
+        }
+
+        .number-col {
+            width: 140px;
+        }
+
+        .name-col {
+            width: 150px;
+        }
+
+        .amount-col {
+            width: 120px;
+            text-align: right;
+        }
+
+        .status-col {
+            width: 100px;
+        }
+
+        .action-col {
+            width: 150px;
+        }
+
+        .budget-occupancy-col {
+            width: 140px;
+            text-align: right;
+            background-color: #f0f7ff;
+            font-weight: 500;
+        }
+
+        .budget-remaining-col {
+            width: 140px;
+            text-align: right;
+            background-color: #f6ffed;
+            font-weight: 500;
+        }
+
+        thead .budget-occupancy-col {
+            background-color: #e6f7ff;
+            color: #0050b3;
+        }
+
+        thead .budget-remaining-col {
+            background-color: #f6ffed;
+            color: #389e0d;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 2px;
+            font-size: 12px;
+        }
+
+        .status-approving {
+            background: #e6f7ff;
+            color: #1890ff;
+        }
+
+        .status-returned {
+            background: #fff7e6;
+            color: #fa8c16;
+        }
+
+        .status-approved {
+            background: #f6ffed;
+            color: #52c41a;
+        }
+
+        .status-rejected {
+            background: #fff1f0;
+            color: #f5222d;
+        }
+
+        .status-disabled {
+            background: #f5f5f5;
+            color: #8c8c8c;
+        }
+
+        .amount {
+            font-family: 'Courier New', monospace;
+            color: #262626;
+        }
+
+        .amount-positive {
+            color: #52c41a;
+        }
+
+        .amount-warning {
+            color: #fa8c16;
+        }
+
+        .amount-danger {
+            color: #f5222d;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 16px;
+            padding: 12px 0;
+        }
+
+        .pagination-info {
+            font-size: 12px;
+            color: #8c8c8c;
+        }
+
+        .pagination-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .pagination-btn {
+            padding: 4px 8px;
+            border: 1px solid #d9d9d9;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .pagination-btn:hover {
+            border-color: #1890ff;
+            color: #1890ff;
+        }
+
+        .pagination-btn.active {
+            background: #1890ff;
+            color: white;
+            border-color: #1890ff;
+        }
+
+        /* 模态框样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 1200px;
+            max-height: 90vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid #e8e8e8;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #262626;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #8c8c8c;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-body {
+            padding: 24px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid #e8e8e8;
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #262626;
+            font-weight: 500;
+        }
+
+        .form-label .required {
+            color: #f5222d;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #1890ff;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 4px;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+
+        .alert-warning {
+            background: #fff7e6;
+            border: 1px solid #ffd591;
+            color: #d46b08;
+        }
+
+        .alert-info {
+            background: #e6f7ff;
+            border: 1px solid #91d5ff;
+            color: #0050b3;
+        }
+
+        .readonly-field {
+            background: #f5f5f5;
+            color: #8c8c8c;
+            cursor: not-allowed;
+        }
+
+        .info-section {
+            margin-bottom: 24px;
+        }
+
+        .info-section-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #262626;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: #8c8c8c;
+            margin-bottom: 4px;
+        }
+
+        .info-value {
+            font-size: 14px;
+            color: #262626;
+        }
+
+        .procurement-detail-row {
+            border: 1px solid #e8e8e8;
+            border-radius: 4px;
+            padding: 16px;
+            margin-bottom: 12px;
+            background: #fafafa;
+        }
+
+        .procurement-detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .procurement-detail-title {
+            font-weight: 600;
+            color: #262626;
+        }
+
+        .procurement-detail-content {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .detail-label {
+            font-size: 12px;
+            color: #8c8c8c;
+            margin-bottom: 4px;
+        }
+
+        .detail-value {
+            font-size: 14px;
+            color: #262626;
+            font-weight: 500;
+        }
+
+        .budget-selector {
+            border: 1px solid #e8e8e8;
+            border-radius: 4px;
+            padding: 12px;
+            background: #fafafa;
+            margin-bottom: 12px;
+        }
+
+        .budget-selector-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .budget-selector-title {
+            font-weight: 600;
+            color: #262626;
+        }
+
+        .budget-info {
+            display: flex;
+            gap: 24px;
+            font-size: 14px;
+        }
+
+        .budget-info-item {
+            display: flex;
+            gap: 8px;
+        }
+
+        .budget-info-label {
+            color: #8c8c8c;
+        }
+
+        .budget-info-value {
+            color: #262626;
+            font-weight: 500;
+        }
+
+        .procurement-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+        }
+
+        .procurement-table th,
+        .procurement-table td {
+            padding: 12px;
+            border: 1px solid #e8e8e8;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        .procurement-table th {
+            background: #fafafa;
+            font-weight: 600;
+            color: #262626;
+        }
+
+        .procurement-table td {
+            background: white;
+        }
+
+        .budget-code-input {
+            cursor: pointer;
+            border: 1px solid #d9d9d9;
+            padding: 8px 12px;
+            border-radius: 4px;
+            background: white;
+            width: 100%;
+            text-align: left;
+        }
+
+        .budget-code-input:hover {
+            border-color: #1890ff;
+        }
+
+        .budget-code-input:focus {
+            outline: none;
+            border-color: #1890ff;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #8c8c8c;
+        }
+
+        .search-input-wrapper {
+            position: relative;
+        }
+
+        .search-input-wrapper input {
+            padding-left: 36px;
+        }
+    </style>
+</head>
+<body>
+    <div class="prototype-container">
+        <!-- 页面切换器 -->
+        <div class="page-switcher">
+            <button class="page-btn active" onclick="switchPage('budget')">预算明细维护</button>
+            <button class="page-btn" onclick="switchPage('procurement')">采购申请</button>
+        </div>
+
+        <!-- 预算明细维护页面 -->
+        <div id="budget-page" class="page-content active">
+            <div class="container">
+                <div class="header">
+                    <div class="breadcrumb">首页 / 预算管理 / 预算明细维护</div>
+                    <div class="tabs">
+                        <div class="tab active">预算明细维护</div>
+                        <div class="tab">预算占用监控</div>
+                    </div>
+                </div>
+
+                <div class="page-title">预算明细维护</div>
+
+                <!-- 工具栏 -->
+                <div class="toolbar">
+                    <div class="search-bar">
+                        <input type="text" class="search-input" placeholder="搜索预算明细编码、预算项目标题、申请人...">
+                        <select class="search-input" style="width: 150px;">
+                            <option>全部部门</option>
+                            <option>Galaxy研发组</option>
+                            <option>产品部</option>
+                        </select>
+                        <select class="search-input" style="width: 120px;">
+                            <option>全部状态</option>
+                            <option>审批通过</option>
+                            <option>审批中</option>
+                            <option>审批退回</option>
+                        </select>
+                        <button class="btn btn-primary">查询</button>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="openModal('addBudgetModal')">新增预算明细</button>
+                        <button class="btn" onclick="openModal('importBudgetModal')">导入预算明细</button>
+                        <button class="btn">导出报表</button>
+                    </div>
+                </div>
+
+                <!-- 预算明细表格 -->
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th class="checkbox-col">选择</th>
+                                <th class="number-col">预算明细编码</th>
+                                <th class="name-col">预算项目标题</th>
+                                <th class="name-col">申请人</th>
+                                <th class="name-col">申请部门</th>
+                                <th class="name-col">申请时间</th>
+                                <th class="amount-col">预算明细金额</th>
+                                <th class="budget-occupancy-col">占用金额</th>
+                                <th class="budget-remaining-col">剩余可用</th>
+                                <th class="status-col">审批状态</th>
+                                <th class="action-col">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="checkbox-col"><input type="checkbox"></td>
+                                <td>YSJH-260203-006-01</td>
+                                <td>办公软件采购</td>
+                                <td>孙彧轩</td>
+                                <td>Galaxy研发组</td>
+                                <td>2026-02-03 15:19:11</td>
+                                <td class="amount">¥10,000.00</td>
+                                <td class="budget-occupancy-col amount amount-positive">¥3,500.00</td>
+                                <td class="budget-remaining-col amount amount-positive">¥6,500.00</td>
+                                <td><span class="status-badge status-approved">审批通过</span></td>
+                                <td>
+                                    <a href="#" style="color: #1890ff;">编辑</a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="checkbox-col"><input type="checkbox"></td>
+                                <td>YSJH-260203-006-02</td>
+                                <td>服务器设备采购</td>
+                                <td>李小明</td>
+                                <td>技术部</td>
+                                <td>2026-02-05 10:30:00</td>
+                                <td class="amount">¥50,000.00</td>
+                                <td class="budget-occupancy-col amount amount-warning">¥45,000.00</td>
+                                <td class="budget-remaining-col amount amount-warning">¥5,000.00</td>
+                                <td><span class="status-badge status-approved">审批通过</span></td>
+                                <td>
+                                    <a href="#" style="color: #1890ff;">编辑</a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="checkbox-col"><input type="checkbox"></td>
+                                <td>YSJH-260203-006-03</td>
+                                <td>办公用品采购</td>
+                                <td>王芳</td>
+                                <td>行政部</td>
+                                <td>2026-02-01 09:15:00</td>
+                                <td class="amount">¥5,000.00</td>
+                                <td class="budget-occupancy-col amount amount-danger">¥5,000.00</td>
+                                <td class="budget-remaining-col amount amount-danger">¥0.00</td>
+                                <td><span class="status-badge status-approved">审批通过</span></td>
+                                <td>
+                                    <a href="#" style="color: #1890ff;">编辑</a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="checkbox-col"><input type="checkbox"></td>
+                                <td>YSJH-260203-006-04</td>
+                                <td>市场推广费用</td>
+                                <td>张伟</td>
+                                <td>市场部</td>
+                                <td>2026-02-10 14:20:00</td>
+                                <td class="amount">¥20,000.00</td>
+                                <td class="budget-occupancy-col" style="color: #8c8c8c;">-</td>
+                                <td class="budget-remaining-col" style="color: #8c8c8c;">-</td>
+                                <td><span class="status-badge status-approving">审批中</span></td>
+                                <td>
+                                    <a href="#" style="color: #1890ff;">编辑</a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="checkbox-col"><input type="checkbox"></td>
+                                <td>YSJH-260203-006-05</td>
+                                <td>培训费用</td>
+                                <td>赵敏</td>
+                                <td>人力资源部</td>
+                                <td>2026-01-28 11:00:00</td>
+                                <td class="amount">¥8,000.00</td>
+                                <td class="budget-occupancy-col amount amount-positive">¥2,000.00</td>
+                                <td class="budget-remaining-col amount amount-positive">¥6,000.00</td>
+                                <td><span class="status-badge status-approved">审批通过</span></td>
+                                <td>
+                                    <a href="#" style="color: #1890ff;">编辑</a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="checkbox-col"><input type="checkbox"></td>
+                                <td>YSJH-260203-006-06</td>
+                                <td>设备维护费用</td>
+                                <td>刘强</td>
+                                <td>运维部</td>
+                                <td>2026-02-12 16:30:00</td>
+                                <td class="amount">¥15,000.00</td>
+                                <td class="budget-occupancy-col" style="color: #8c8c8c;">-</td>
+                                <td class="budget-remaining-col" style="color: #8c8c8c;">-</td>
+                                <td><span class="status-badge status-returned">审批退回</span></td>
+                                <td>
+                                    <a href="#" style="color: #1890ff;">编辑</a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pagination">
+                    <div class="pagination-info">共25条，每页10条</div>
+                    <div class="pagination-controls">
+                        <button class="pagination-btn">&lt;</button>
+                        <button class="pagination-btn active">1</button>
+                        <button class="pagination-btn">2</button>
+                        <button class="pagination-btn">3</button>
+                        <button class="pagination-btn">&gt;</button>
+                    </div>
+                </div>
+
+                <div class="alert alert-info" style="margin-top: 16px;">
+                    <strong>说明：</strong>占用金额和剩余可用由系统自动计算，不可手动修改。仅"审批通过"状态的预算明细可被采购申请关联。非"审批通过"状态的预算明细（如审批中、审批退回等）占用金额和剩余可用显示为"-"。
+                </div>
+            </div>
+        </div>
+
+        <!-- 采购申请页面 -->
+        <div id="procurement-page" class="page-content">
+            <div class="container">
+                <div class="header">
+                    <div class="breadcrumb">首页 / 采购管理 / 新增采购申请</div>
+                    <div class="tabs">
+                        <div class="tab">工作台</div>
+                        <div class="tab">任务中心</div>
+                        <div class="tab">采购申请</div>
+                        <div class="tab active">新增采购申请</div>
+                    </div>
+                </div>
+
+                <div class="page-title">新增采购申请</div>
+
+                <!-- 采购申请基本信息 -->
+                <div class="info-section">
+                    <div class="info-section-title">基本信息</div>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">申请人</div>
+                            <div class="info-value">范文霭</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">采购模式</div>
+                            <div class="info-value">
+                                <select class="form-input" style="width: 100%;">
+                                    <option>请选择采购模式</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">申请人部门</div>
+                            <div class="info-value">产品运营组</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">采购承担部门</div>
+                            <div class="info-value">
+                                <select class="form-input" style="width: 100%;">
+                                    <option>承担部门比例(1个部门)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">采购申请单据编号</div>
+                            <div class="info-value">CGSQ-260203-010</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 采购明细 -->
+                <div class="info-section">
+                    <div class="info-section-title">采购明细</div>
+                    
+                    <table class="procurement-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">选择</th>
+                                <th style="width: 150px;">采购申请明细编号</th>
+                                <th style="width: 200px;">采购品类</th>
+                                <th style="width: 200px;">关联预算明细编号</th>
+                                <th style="width: 200px;">采购产品</th>
+                                <th style="width: 150px;">采购ROI评估</th>
+                                <th style="width: 100px;">币种</th>
+                                <th style="width: 120px;">原币种金额</th>
+                                <th style="width: 100px;">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><input type="checkbox"></td>
+                                <td>CGSQ-260203-010-01</td>
+                                <td>
+                                    <select class="form-input" style="width: 100%;">
+                                        <option>请选择采购品类</option>
+                                        <option>技术与IT基础设施类采购</option>
+                                    </select>
+                                </td>
+                                <td>
+                                    <input type="text" class="budget-code-input" placeholder="请选择预算明细编号" 
+                                           value="YSJH-260203-006-01" 
+                                           onclick="openModal('selectBudgetModal')" readonly>
+                                </td>
+                                <td>
+                                    <input type="text" class="form-input" placeholder="请输入采购产品">
+                                </td>
+                                <td>
+                                    <input type="text" class="form-input" placeholder="请输入ROI评估">
+                                </td>
+                                <td>
+                                    <select class="form-input" style="width: 100%;">
+                                        <option>CNY-人民币</option>
+                                    </select>
+                                </td>
+                                <td>
+                                    <input type="number" class="form-input" placeholder="0.00" value="5000.00">
+                                </td>
+                                <td>
+                                    <a href="#" style="color: #ff4d4f;">删除</a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><input type="checkbox"></td>
+                                <td>CGSQ-260203-010-02</td>
+                                <td>
+                                    <select class="form-input" style="width: 100%;">
+                                        <option>请选择采购品类</option>
+                                        <option>技术与IT基础设施类采购</option>
+                                    </select>
+                                </td>
+                                <td>
+                                    <input type="text" class="budget-code-input" placeholder="请选择预算明细编号" 
+                                           onclick="openModal('selectBudgetModal')" readonly>
+                                </td>
+                                <td>
+                                    <input type="text" class="form-input" placeholder="请输入采购产品">
+                                </td>
+                                <td>
+                                    <input type="text" class="form-input" placeholder="请输入ROI评估">
+                                </td>
+                                <td>
+                                    <select class="form-input" style="width: 100%;">
+                                        <option>CNY-人民币</option>
+                                    </select>
+                                </td>
+                                <td>
+                                    <input type="number" class="form-input" placeholder="0.00">
+                                </td>
+                                <td>
+                                    <a href="#" style="color: #ff4d4f;">删除</a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div style="margin-top: 16px;">
+                        <button class="btn btn-primary">添加明细行</button>
+                    </div>
+                </div>
+
+                <!-- 附件上传 -->
+                <div class="info-section">
+                    <div class="info-section-title">附件上传</div>
+                    <div style="padding: 24px; border: 1px dashed #d9d9d9; border-radius: 4px; text-align: center; background: #fafafa;">
+                        <div style="font-size: 14px; color: #8c8c8c; margin-bottom: 8px;">普通文件(供应商报价&供应商评审记录)</div>
+                        <div style="font-size: 12px; color: #8c8c8c;">点击上传或将文件拖拽到此处</div>
+                    </div>
+                </div>
+
+                <!-- 操作按钮 -->
+                <div style="margin-top: 24px; display: flex; justify-content: flex-end; gap: 12px;">
+                    <button class="btn">保存草稿</button>
+                    <button class="btn btn-primary">提交审批</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 选择预算明细弹窗 -->
+    <div id="selectBudgetModal" class="modal">
+        <div class="modal-content" style="max-width: 1400px;">
+            <div class="modal-header">
+                <div class="modal-title">预算明细列表</div>
+                <button class="modal-close" onclick="closeModal('selectBudgetModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="search-input-wrapper" style="margin-bottom: 16px;">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" class="search-input" placeholder="请搜索审批通过的预算明细编号" 
+                           style="width: 100%; padding-left: 36px;">
+                </div>
+
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th class="checkbox-col">选择</th>
+                                <th class="number-col">预算明细编号</th>
+                                <th class="name-col">预算项目标题</th>
+                                <th class="name-col">申请人</th>
+                                <th class="name-col">申请部门</th>
+                                <th class="name-col">申请时间</th>
+                                <th class="amount-col">预算明细金额</th>
+                                <th class="budget-occupancy-col">占用金额</th>
+                                <th class="budget-remaining-col">剩余可用</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="checkbox-col"><input type="radio" name="budgetSelect"></td>
+                                <td>YSJH-260203-006-01</td>
+                                <td>办公软件采购</td>
+                                <td>孙彧轩</td>
+                                <td>Galaxy研发组</td>
+                                <td>2026-02-03 15:19:11</td>
+                                <td class="amount">¥10,000.00</td>
+                                <td class="budget-occupancy-col amount amount-positive">¥3,500.00</td>
+                                <td class="budget-remaining-col amount amount-positive">¥6,500.00</td>
+                            </tr>
+                            <tr>
+                                <td class="checkbox-col"><input type="radio" name="budgetSelect"></td>
+                                <td>YSJH-260203-006-02</td>
+                                <td>服务器设备采购</td>
+                                <td>李小明</td>
+                                <td>技术部</td>
+                                <td>2026-02-05 10:30:00</td>
+                                <td class="amount">¥50,000.00</td>
+                                <td class="budget-occupancy-col amount amount-warning">¥45,000.00</td>
+                                <td class="budget-remaining-col amount amount-warning">¥5,000.00</td>
+                            </tr>
+                            <tr style="opacity: 0.5;">
+                                <td class="checkbox-col"><input type="radio" name="budgetSelect" disabled></td>
+                                <td>YSJH-260203-006-03</td>
+                                <td>办公用品采购</td>
+                                <td>王芳</td>
+                                <td>行政部</td>
+                                <td>2026-02-01 09:15:00</td>
+                                <td class="amount">¥5,000.00</td>
+                                <td class="budget-occupancy-col amount amount-danger">¥5,000.00</td>
+                                <td class="budget-remaining-col amount amount-danger">¥0.00</td>
+                            </tr>
+                            <tr>
+                                <td class="checkbox-col"><input type="radio" name="budgetSelect"></td>
+                                <td>YSJH-260203-006-05</td>
+                                <td>培训费用</td>
+                                <td>赵敏</td>
+                                <td>人力资源部</td>
+                                <td>2026-01-28 11:00:00</td>
+                                <td class="amount">¥8,000.00</td>
+                                <td class="budget-occupancy-col amount amount-positive">¥2,000.00</td>
+                                <td class="budget-remaining-col amount amount-positive">¥6,000.00</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pagination" style="margin-top: 16px;">
+                    <div class="pagination-info">共0条</div>
+                    <div class="pagination-controls">
+                        <button class="pagination-btn">&lt;</button>
+                        <button class="pagination-btn active">1</button>
+                        <button class="pagination-btn">&gt;</button>
+                        <span style="margin-left: 8px; font-size: 12px; color: #8c8c8c;">
+                            前往 <input type="number" value="1" style="width: 40px; padding: 2px; border: 1px solid #d9d9d9; border-radius: 2px;"> 页
+                        </span>
+                        <span style="margin-left: 8px; font-size: 12px; color: #8c8c8c;">5条/页</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeModal('selectBudgetModal')">取消</button>
+                <button class="btn btn-primary" onclick="selectBudget()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新增预算明细弹窗 -->
+    <div id="addBudgetModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">新增预算明细</div>
+                <button class="modal-close" onclick="closeModal('addBudgetModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">预算明细编码 <span class="required">*</span></label>
+                        <input type="text" class="form-input" placeholder="请输入预算明细编码">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">预算项目标题 <span class="required">*</span></label>
+                        <input type="text" class="form-input" placeholder="请输入预算项目标题">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">申请人 <span class="required">*</span></label>
+                        <input type="text" class="form-input" placeholder="请输入申请人">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">申请部门 <span class="required">*</span></label>
+                        <select class="form-input">
+                            <option>请选择部门</option>
+                            <option>Galaxy研发组</option>
+                            <option>技术部</option>
+                            <option>市场部</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">申请时间 <span class="required">*</span></label>
+                        <input type="datetime-local" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">预算明细金额 <span class="required">*</span></label>
+                        <input type="number" class="form-input" placeholder="请输入金额">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">占用金额</label>
+                    <input type="text" class="form-input readonly-field" value="¥0.00" readonly>
+                    <small style="color: #8c8c8c; font-size: 12px;">系统自动计算，不可手动修改</small>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">剩余可用</label>
+                    <input type="text" class="form-input readonly-field" value="¥0.00" readonly>
+                    <small style="color: #8c8c8c; font-size: 12px;">系统自动计算，不可手动修改</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeModal('addBudgetModal')">取消</button>
+                <button class="btn btn-primary">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 导入预算明细弹窗 -->
+    <div id="importBudgetModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">导入预算明细</div>
+                <button class="modal-close" onclick="closeModal('importBudgetModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <strong>说明：</strong>请下载模板文件，按照模板格式填写预算明细数据后上传。
+                </div>
+                <div class="form-group">
+                    <label class="form-label">选择文件</label>
+                    <input type="file" class="form-input" accept=".xlsx,.xls">
+                    <small style="color: #8c8c8c; font-size: 12px;">支持格式：.xlsx, .xls</small>
+                </div>
+                <div style="margin-top: 16px;">
+                    <button class="btn">下载模板</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeModal('importBudgetModal')">取消</button>
+                <button class="btn btn-primary">导入</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchPage(page) {
+            // 隐藏所有页面
+            document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.page-btn').forEach(b => b.classList.remove('active'));
+            
+            // 显示选中的页面
+            document.getElementById(page + '-page').classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        function selectBudget() {
+            // 获取选中的预算明细
+            const selected = document.querySelector('input[name="budgetSelect"]:checked');
+            if (!selected) {
+                alert('请先选择一个预算明细');
+                return;
+            }
+            
+            const row = selected.closest('tr');
+            const budgetCode = row.cells[1].textContent;
+            
+            // 更新采购明细表格中的关联预算明细编号字段
+            const activeInput = document.querySelector('.budget-code-input:focus') || 
+                               document.querySelector('.budget-code-input[value=""]') ||
+                               document.querySelector('.budget-code-input');
+            if (activeInput) {
+                activeInput.value = budgetCode;
+            }
+            
+            closeModal('selectBudgetModal');
+        }
+
+        // 点击模态框外部关闭
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.classList.remove('active');
+            }
+        }
+    </script>
+</body>
+</html>
